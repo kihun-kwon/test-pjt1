@@ -16,6 +16,7 @@
 package egovframework.example.sample.service.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
@@ -104,8 +105,8 @@ public class SampleDAO extends EgovAbstractDAO {
 		return (Integer) select("sampleDAO.selectSampleListTotCnt", searchVO);
 	}
 	
-	public String insertOrderId(){
-		return (String) insert("");
+	public String insertOrderId(Map<String,String> param){
+		return (String) insert("sampleDAO.insertOrderId",param);
 	}
 
 }

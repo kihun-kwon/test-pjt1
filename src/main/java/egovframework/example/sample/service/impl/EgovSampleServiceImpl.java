@@ -149,6 +149,10 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	
 	@Override
 	public String getFgKey(Map<String,String> param){
+		
+		sampleDAO.insertOrderId(param);
+		
+		
 		return EximbayService.ready(param);
 	}
 	

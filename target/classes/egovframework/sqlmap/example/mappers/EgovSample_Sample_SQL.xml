@@ -43,14 +43,19 @@
 			#{lang},
 			#{payment_method},
 			#{multi_payment_method},
-			#{},
-			#{},
-			#{},
-			#{},
-			#{},
-			#{},
-			#{},
-			#{},
+			#{mid},
+			#{return_url},
+			#{status_url},
+			#{name},
+			#{phone_number},
+			#{email},
+			#{receipt_status},
+			#{amount_tax_free},
+			#{amount_taxable},
+			#{amount_vat},
+			#{amount_service_fee},
+			#{other_param},
+			#{other_param2}
 		)
 	</insert>
 
