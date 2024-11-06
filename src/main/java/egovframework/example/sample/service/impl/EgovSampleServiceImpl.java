@@ -156,14 +156,14 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	}
 	
 	@Override
-	public String getFgKey(EximbayReadyOrderVO eximbayReadyOrderVO, HttpServletRequest req, HttpServletResponse res){
+	public String getFgKey(EximbayReadyOrderVO eximbayReadyOrderVO, HttpServletRequest req, HttpServletResponse res) throws Exception{
 		
 		//EximbayReadyOrderVO eximbayReadyOrderVO = null;
 		try {
-			
+			//주문정보 확인
 			if (eximbayReadyOrderVO == null)
 				throw new RuntimeException();
-			
+			//상품정보 확인
 			if (eximbayReadyOrderVO.getProductList() == null || eximbayReadyOrderVO.getProductList().size() == 0)
 				throw new RuntimeException();
 			
@@ -215,9 +215,9 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			
 			/**
 			 * transaction_type 
-			 * PAYMENT: 인증, 승인, 매입  
-			 * PAYER_AUTH: 인증
-			 * AUTHORIZE: 인증, 승인
+			 * PAYMENT: 인증, 승인, 매입   -- 간편결제
+			 * PAYER_AUTH: 인증                -- 미사용 
+			 * AUTHORIZE: 인증, 승인         -- 해외발행카드 결제
 			 **/
 			// 공통
 			//TODO 가맹점 아이디 확인 후 셋팅
@@ -287,8 +287,9 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 				eximbayReadyOrderVO.getEximbaySettingsVO().setIssuer_country("KR");
 				//가상계좌 결제 입금만료기한 셋팅 시 
 				//param.getEximbaySettingsVO().setVirtualaccount_expiry_date("");
-			} else 
+			} else {
 				throw new RuntimeException();
+			}
 			
 			//TODO 상품정보 DB 조회
 			eximbayReadyOrderVO.getProductList().clear();
@@ -326,9 +327,8 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 				throw new RuntimeException();
 			}
 		} catch (Exception e){
-			e.printStackTrace();
+			throw new RuntimeException();
 		}
-		return null;
 	}
 	
 	public boolean eximbayVerifyValidate(Map<String,String> orderInfo, Map<String,String> param){
@@ -402,35 +402,45 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 					orderInfo.put("payment_method","P101");
 					orderInfo.put("transaction_type","PAYMENT");
 					//주문 데이터 확인
-					if (orderInfo != null && !orderInfo.isEmpty()){
+					//if (orderInfo != null && !orderInfo.isEmpty()){
 						// 파라미터 validate
-						if (eximbayVerifyValidate(orderInfo,param)) {
-							EximbayPayType payType = EximbayPayType.findByPayType(orderInfo.get("payment_method"));
-							EximbayPayTypeGroup eximBayPayment = EximbayPayTypeGroup.findByPayment(payType);
-							/**
-							 * TODO 결제 데이터 업데이트 
-							 */
-							//TODO 중복 호출 방지해야함. transactionID 또는 order_id 확인 필요.
-							//검증 데이터 DB 등록 후
-							
-							
-							//해외 결제인 경우
-							if (eximBayPayment == EximbayPayTypeGroup.GLOBALPAY){
-								/**
-								 * TODO 내부 청구 시스템 데이터 송신
-								 */
-							} 
-							
-							return "rescode=0000&resmsg=Success";
-						} else {
-							// validate 통과 못한 경우
-							return "rescode=null&resmsg=null";
-						}
-						
-					} else {
-						//주문 데이터가 없는 경우
-						return "rescode=null&resmsg=null";
+						//if (eximbayVerifyValidate(orderInfo,param)) {
+					EximbayPayType payType = EximbayPayType.findByPayType(param.get("payment_method"));
+					EximbayPayTypeGroup eximBayPayment = EximbayPayTypeGroup.findByPayment(payType);
+					/**
+					 * TODO 결제 데이터 업데이트 
+					 */
+					//TODO 중복 호출 방지해야함. transactionID 또는 order_id 확인 필요.
+					//검증 데이터 DB 등록 후
+					/**
+					 * status
+					 * SALE:정상매출 (매출 확정) -- 국내거래?
+					 * AUTH: 승인거래 (매출 미확정, 수동 매입시 매출 확정) -- 해외 거래?
+					 * REGISTERED: 주문등록 (매출 미확정, 입금통지시 매출 확정)
+					 * NONE: 거래 없음 
+					 **/ 
+					//가상계좌
+					if (payType == EximbayPayType.VER_ACCOUNT) {
+						//account_number:가상계좌 번호, bank_name:가상계좌 은행명, depositor:입금자 명,due_date:입금 유효기간
 					}
+					
+					//해외 결제인 경우
+					if (eximBayPayment == EximbayPayTypeGroup.GLOBALPAY){
+						/**
+						 * TODO 내부 청구 시스템 데이터 송신
+						 */
+					} 
+					
+					return "rescode=0000&resmsg=Success";
+						//} else {
+							// validate 통과 못한 경우
+						//	return "rescode=null&resmsg=null";
+						//}
+						
+					//} else {
+						//주문 데이터가 없는 경우
+					//	return "rescode=null&resmsg=null";
+					//}
 				} else {
 					//eximbay querystring 실패 코드 전송
 					return String.format("rescode=%s&resmsg=%s", param.get("rescode"), param.get("resmsg"));

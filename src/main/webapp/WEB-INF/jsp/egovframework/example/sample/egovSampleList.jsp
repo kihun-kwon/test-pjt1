@@ -171,7 +171,7 @@
 
 <body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
 	<form id="form1">
-		<!-- input type="hidden" name="eximbayPaymentVO.payment_method" value="P302"/-->
+		<input type="hidden" name="eximbayPaymentVO.payment_method" value="P101"/>
 		<!-- input type="hidden" name="multi_payment_method" value="P302-P303"/-->
 		<input type="hidden" name="productList[0].product_id" value="1" />
 		<input type="hidden" name="productList[1].product_id" value="2" />
