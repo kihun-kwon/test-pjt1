@@ -55,7 +55,8 @@ public enum EximbayErrorCode {
 	VALIDATION_FAILED("VALIDATION_FAILED","The transaction failed due to a valiation failure.","결제 처리 중 검증에 실패해 거절되었습니다.",""),
 	DUPLICATION_DECLINE("DUPLICATION_DECLINE","The transaction was decline because a specific field was requested as duplicated. Please make sure that duplicate values are not requested.","특정 필드에 중복값이 요청되었습니다. 중복이 허용되지 않는 필드를 확인해주세요.",""),
 	INVALID_CAPTURE_REQUEST("INVALID_CAPTURE_REQUEST","The requested capture was invalid. Check amount exceeds the authorized amount or orginal transaction.","캡쳐 요청이 유효하지 않습니다. 요청한 원승인 거래의 금액 또는 거래 정보가 올바른지 확인해주세요.",""),
-	ALREADY_ACTIVE_PREPAID_CARD("ALREADY_ACTIVE_PREPAID_CARD","Gift card account or prepaid card account is already active.","사용한 키프트카드 또는 선불카드가 이미 활성화되었습니다.","");
+	ALREADY_ACTIVE_PREPAID_CARD("ALREADY_ACTIVE_PREPAID_CARD","Gift card account or prepaid card account is already active.","사용한 키프트카드 또는 선불카드가 이미 활성화되었습니다.",""),
+	EMPTY("","","","");
 
 	private String errCode;
 	private String enMsg;
@@ -72,7 +73,7 @@ public enum EximbayErrorCode {
 	public static EximbayErrorCode findByPayType(String code){
 		return Arrays.stream(EximbayErrorCode.values())
 				.filter(val -> val.errCode.equals(code))
-				.findAny().orElse(null);
+				.findAny().orElse(EximbayErrorCode.EMPTY);
 	}
 
 	public String getErrCode() {

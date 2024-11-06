@@ -59,6 +59,23 @@
         //-->
     </script>
     <script type="text/javascript">
+    jQuery.fn.serializeObject = function() {
+  	  var obj = null;
+  	  try {
+  	    if(this[0].tagName && this[0].tagName.toUpperCase() == "FORM" ) {
+  	      var arr = this.serializeArray();
+  	      if(arr){
+  	        obj = {};    
+  	        jQuery.each(arr, function() {
+  	        obj[this.name] = this.value;
+  	        });             
+  	      }
+  	    }
+  	  }catch(e) {
+  	    alert(e.message);
+  	  }finally  {}
+  	  return obj;
+  	}
       function payment() {
     	  const payment = {};
     	  const tax = {};
@@ -135,12 +152,16 @@
     	  $.get({
     		  type:'POST',
     		  url:'/test-pjt1/getFgKey.do',
-    		  data:{'data':JSON.stringify(sendData)},
+    		  data:$('#form1').serialize(),
     		  success: function (res){
 	    		  if (res){
-	    			  sendData.fgkey = res;
-	    			  EXIMBAY.request_pay(sendData);
+	    			  console.log(res);
+	    			  //sendData.fgkey = res;
+	    			  EXIMBAY.request_pay(res);
 	    		  }
+    	  	  },
+    	  	  error: function (error){
+    	  		  console.log(err);
     	  	  }
     	});
           
@@ -149,6 +170,12 @@
 </head>
 
 <body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
+	<form id="form1">
+		<!-- input type="hidden" name="eximbayPaymentVO.payment_method" value="P302"/-->
+		<!-- input type="hidden" name="multi_payment_method" value="P302-P303"/-->
+		<input type="hidden" name="productList[0].product_id" value="1" />
+		<input type="hidden" name="productList[1].product_id" value="2" />
+	</form>
     <form:form commandName="searchVO" id="listForm" name="listForm" method="post">
         <input type="hidden" name="selectedId" />
         <div id="content_pop">

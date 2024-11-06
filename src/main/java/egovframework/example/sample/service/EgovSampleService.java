@@ -21,6 +21,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyOrderVO;
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyPaymentVO;
+
 /**
  * @Class Name : EgovSampleService.java
  * @Description : EgovSampleService Class
@@ -85,10 +88,12 @@ public interface EgovSampleService {
 	 * @return 글 총 갯수
 	 * @exception
 	 */
-	int selectSampleListTotCnt(SampleDefaultVO searchVO);
+	int selectSampleListTotCnt(SampleDefaultVO searchVO) throws Exception;
 	
-	String getFgKey(Map<String,String> param);
+	String getFgKey(EximbayReadyOrderVO param, HttpServletRequest req, HttpServletResponse res) throws Exception;
 	
-	String callEximbayStatus(Map<String,String> param, HttpServletRequest req, HttpServletResponse res);
+	String callEximbayStatus(Map<String,String> param, HttpServletRequest req, HttpServletResponse res) throws Exception;
+	
+	String eximbayPaymentCancel(String transactionId, HttpServletRequest req, HttpServletResponse res) throws Exception;
 
 }

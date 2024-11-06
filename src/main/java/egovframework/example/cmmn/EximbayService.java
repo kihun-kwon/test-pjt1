@@ -3,23 +3,32 @@ package egovframework.example.cmmn;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
+
+import egovframework.example.sample.service.eximbay.EximbayCommReturnVO;
+import egovframework.example.sample.service.eximbay.EximbayCommVO;
+import egovframework.example.sample.service.eximbay.cancel.EximbayCancelOrderVO;
+import egovframework.example.sample.service.eximbay.cancel.EximbayCancelReturnVO;
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyOrderVO;
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyReturnVO;
 
 public class EximbayService {
-	
-	private static Map<String,String> verifyChkParam;
 	
 	private final static String testEximbayPaymentUrl = "https://api-test.eximbay.com/v1/payments";
 	private final static String liveEximbayPaymentUrl = "https://api.eximbay.com/v1/payments";
@@ -30,22 +39,16 @@ public class EximbayService {
 	private final static String testEximbayMid = "1849705C64";
 	private final static String liveEximbayMid = "";
 	
-	private static Map<String,String> sendToEximbay(EximbayPayStatus eximbayPay, Map<String,String> param){
+	private static EximbayCommReturnVO sendToEximbay(EximbayPayStatus payStatus,String sendUrl, String sendData){
 		BufferedReader in = null;
 		try {
-			String payUrl = testEximbayPaymentUrl + eximbayPay.getSubUrl();
-			if(eximbayPay == EximbayPayStatus.CANCEL || eximbayPay == EximbayPayStatus.CATURE)
-				payUrl = testEximbayPaymentUrl + String.format(eximbayPay.getSubUrl(),param.get("transaction_id"));
-			
-			URL url = new URL(payUrl);
-			
-			String sendData = String.valueOf(param.get("data"));
+			URL url = new URL(sendUrl);
 			byte[] postDataBytes = sendData.getBytes("UTF-8");
 			
 			HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
 			conn.setRequestMethod("POST");
 			conn.setConnectTimeout(2000);
-			conn.setReadTimeout(2000);;
+			conn.setReadTimeout(2000);
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
@@ -66,10 +69,15 @@ public class EximbayService {
 			System.out.println(response.toString());
 			
 			ObjectMapper objectMapper = new ObjectMapper();
-			TypeReference<Map<String, String>> typeReference = new TypeReference<Map<String,String>>() {};
-			Map<String,String> data = objectMapper.readValue(response.toString(), typeReference);
-			
-			return data;
+			if (payStatus == EximbayPayStatus.CANCEL){
+				TypeReference<EximbayCancelReturnVO> typeReference = new TypeReference<EximbayCancelReturnVO>() {};
+				EximbayCancelReturnVO data = objectMapper.readValue(response.toString(), typeReference);
+				return data;
+			} else {
+				TypeReference<EximbayReadyReturnVO> typeReference = new TypeReference<EximbayReadyReturnVO>() {};
+				EximbayReadyReturnVO data = objectMapper.readValue(response.toString(), typeReference);
+				return data;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -82,10 +90,12 @@ public class EximbayService {
 		return null;
 	}
 	
-	public static String ready(Map<String,String> param){
-		verifyChkParam = param;
-		Map<String,String> data = sendToEximbay(EximbayPayStatus.READY,param);
-		return data.get("fgkey");
+	public static EximbayCommReturnVO ready(EximbayReadyOrderVO vo){
+		
+		String callUrl = testEximbayPaymentUrl + EximbayPayStatus.READY.getSubUrl();
+		String sendData = vo.toString();
+		System.out.println(sendData);
+		return sendToEximbay(EximbayPayStatus.READY,callUrl,sendData);
 		/*
 		RestTemplate restTemplate = new RestTemplate();
 
@@ -233,101 +243,146 @@ public class EximbayService {
 		*/
 	}
 	
-	public static boolean callEximbayStatus(Map<String,String> param){
-		
-		boolean retVal = false;
-		
-		if (param != null && !param.isEmpty()) {
-			// 수신 결과값이 성공인 경우
-			if("0000".equals(param.get("rescode"))){
-				//&resmsg=Success.&rescode=0000
-				//상점ID 비교 //상점ID &mid=1849705C64
-				if(!testEximbayMid.equals(param.get("mid"))) return false;
-				
-				//TODO 주문번호로 주문정보 조회
-				Map<String,String> orderInfo = new HashMap<String,String>();
-				/*샘플데이터*/
-				orderInfo.put("order_id","20220927152140");
-				orderInfo.put("transaction_id","1849705C6420220927000016");
-				orderInfo.put("currency","USD");
-				orderInfo.put("amount","100");
-				orderInfo.put("payment_method","P101");
-				orderInfo.put("transaction_type","PAYMENT");
-				
-				if (orderInfo == null || orderInfo.isEmpty()) return false;
-				//주문번호 확인 &order_id=20220927152140
-				//if(!orderInfo.get("order_id").equals(param.get("order_id"))) return false;
-				//주문 통화 확인 &currency=USD
-				if(!orderInfo.get("currency").equals(param.get("currency"))) return false;
-				//주문 금액 확인 &amount=100
-				if(!orderInfo.get("amount").equals(param.get("amount"))) return false;
-				//결제수단 코드 확인 &payment_method=P101
-				if(!orderInfo.get("payment_method").equals(param.get("payment_method"))) return false;
-				//국내 or 해외 결제
-				EximbayPayType payType = EximbayPayType.findByPayType(orderInfo.get("payment_method"));
-				EximbayPayment eximBayPayment = EximbayPayment.findByPayment(payType);
-				//국내 결제인 경우
-				if (eximBayPayment == EximbayPayment.LOCALPAY) {
-					//네이버 포인트 & 가상계좌
-					if (payType == EximbayPayType.NAVERPAY_POINT || payType == EximbayPayType.VER_ACCOUNT){
-						
-					} else {
-						
-					}
-				} else if (eximBayPayment == EximbayPayment.GLOBALPAY){
-					
-				} else {
-					return false;
-				}
-				
-				//결제 방식 확인 &transaction_type=PAYMENT
-				if(!orderInfo.get("transaction_type").equals(param.get("transaction_type"))) return false;
-				
-				//TODO 트랜잭션 ID 저장 => 중복인증 또는 승인 방지
-				//인증 요청마다 새롭게 발급되어 수신 &transaction_id=1849705C6420220927000016
-				//트랜잭션 ID가 동일한 경우 중복처리로 간주
-				if(orderInfo.get("transaction_id").equals(param.get("transaction_id"))) return false;
-				
-				//TODO 기타 파라미터 인증 필요한지 확인 필요
-				//&card_number1=4111
-				//&card_number4=1111
-				//&card_holder=TESTP
-				//&access_country=KR
-				//&email=test@eximbay.com
-				//&ver=230
-				//&param3=TEST
-				//&auth_code=309812
-				//&fgkey=2AE38D785E05E6AF57977328908C7CD84A273B3FE6C042D537A800B0CBC783EA
-				//&pay_to=EXIMBAY.COM
-			}
-			retVal = true;
-		}
-		return retVal;
-	}
-	
-	public static boolean verify(HttpServletRequest req, HttpServletResponse res){
-		Map<String,String> param = new HashMap<String,String>();
-		param.put("data", req.getQueryString());
+	/**
+	 * Eximbay 승인 결과 검증
+	 * @param req
+	 * @return
+	 */
+	public static EximbayCommReturnVO verify(HttpServletRequest req){
+		String callUrl = testEximbayPaymentUrl + EximbayPayStatus.VERIFY.getSubUrl();
+		String sendData = "{\"data\":\""+req.getQueryString()+"\"}";
 		//결제 데이터 인증
-		Map<String,String> data = sendToEximbay(EximbayPayStatus.VERIFY, param);
-		if ("0000".equals(data.get("rescode"))){
-			return true;
-		} else {
-			return false;
-		}
+		return sendToEximbay(EximbayPayStatus.VERIFY,callUrl, sendData);
 	}
 	
-	public static boolean cancel(Map<String,String> param){
-		//결제 데이터 취소
-		Map<String,String> data = sendToEximbay(EximbayPayStatus.CANCEL, param);
-		if ("0000".equals(data.get("rescode"))){
-			return true;
-		} else {
-			return false;
-		}
+	/**
+	 * Eximbay 결제승인 취소
+	 * @param transactionId
+	 * @param cancelOrder
+	 * @return
+	 */
+	public static EximbayCommReturnVO cancel(String transactionId, EximbayCancelOrderVO cancelOrder){
+		String callUrl = testEximbayPaymentUrl + String.format(EximbayPayStatus.CANCEL.getSubUrl(),transactionId);
+		//상점 아이디 
+		cancelOrder.setMid(testEximbayMid);
+		String sendData = cancelOrder.toString();
+		return sendToEximbay(EximbayPayStatus.CANCEL,callUrl, sendData);
 	}
 	
-	public static void main(String[] args){
-		System.out.println(EximbayService.ready(new HashMap()));
+	/**
+	 * Eximbay VO 클래스에 포함된 변수로 전송 전문 생성
+	 * 변수의 값이 없으면 제외   
+	 * @param obj
+	 * @return
+	 */
+	public static String appendClassVariable(Object obj){
+		
+		String str = "";
+		Field[] fields = obj.getClass().getDeclaredFields();
+        AccessibleObject.setAccessible(fields, true);
+        for (Field field : fields) {
+        	//field.setAccessible(true);
+        	String fieldName = field.getName();
+        	if (appendExcVariable(fieldName)) continue;
+            try {
+                Object fieldValue = field.get(obj);
+                if(fieldValue instanceof EximbayCommVO){
+					str = declaredMethodInvoke(str,fieldValue);
+                } else if (fieldValue instanceof ArrayList){
+                	str += appendSeparator(str) + arrayListToString(fieldValue);
+                } else {
+                	str = appendParam(str,fieldName, String.valueOf(fieldValue));
+                }
+            } catch (IllegalAccessException ex) {
+                throw new InternalError("Unexpected IllegalAccessException: " + ex.getMessage());
+            } catch (Exception e) {
+				// TODO: handle exception
+			}
+        }
+		return str;
 	}
+	
+	/**
+	 * Eximbay VO 클래스에 선언된 변수 중 ArrayList 전송 전문 생성
+	 * @param listObj
+	 * @return
+	 * @throws Exception
+	 */
+	private static String arrayListToString(Object listObj) throws Exception{
+		String str = "";
+		List<?> list = (List<?>)listObj;
+		EximbayPayParam eximbayPayParam = checkClass(list);
+		for (Object obj : list) {
+			str = declaredMethodInvoke(str,obj);
+		}
+		return "\""+eximbayPayParam.getKeyNm()+"\":[\n" + str + "]\n";
+	}
+	
+	private static EximbayPayParam checkClass(List<?> list){
+		return EximbayPayParam.findByPayType(list.stream()
+					.filter(item -> EximbayPayParam.findByPayType(item.getClass().getSimpleName()) != EximbayPayParam.EMPTY)
+					.findFirst().orElseThrow(() -> new RuntimeException()).getClass().getSimpleName());
+	}
+	
+	/**
+	 * VO 클래스에  선언된 toString method를 실행하여 전송 전문 생성 
+	 * @param str
+	 * @param obj
+	 * @return VO 클래스에 해당하는 전송 전문 
+	 */
+	private static String declaredMethodInvoke(String str, Object obj){
+		try {
+			Method myMethod = obj.getClass().getDeclaredMethod("toString",new Class[]{});
+			String retVal = String.valueOf(myMethod.invoke(obj));
+			if(!"".equals(retVal)) str += appendSeparator(str) + retVal;
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new RuntimeException();
+		}
+		return str;
+	}
+	
+	public static String appendSeparator(String str){
+		return !"".equals(str)?",":"";
+	}
+	
+	public static String appendParam(String str, String key, String val){
+		
+		if (!"".equals(val)) str += appendSeparator(str) + "\""+ key +"\":\"" + val + "\"\n";
+		
+		return str;
+	}
+	
+	/**
+	 * Eximbay VO 클래스 변수 중 전문에서 제외할 대상 지정
+	 * @param fieldName
+	 * @return
+	 */
+	public static boolean appendExcVariable(String fieldName){
+		return " product_id ".indexOf(fieldName) > -1 ? true:false;
+	}
+	
+	/**
+	 * Eximbay VO 클래스 변수값이 모두 비어있는지 확인
+	 * @param obj
+	 * @return
+	 */
+	public static boolean isClassVariableEmpty(Object obj){
+		
+		Field[] fields = obj.getClass().getDeclaredFields();
+        AccessibleObject.setAccessible(fields, true);
+        for (Field field : fields) {
+        	String fieldName = field.getName();
+        	if (appendExcVariable(fieldName)) continue;
+            try {
+                Object fieldValue = field.get(obj);
+                
+                if(fieldValue != null && !"".equals(String.valueOf(fieldValue))) return false; 
+                
+            } catch (IllegalAccessException ex) {
+                throw new InternalError("Unexpected IllegalAccessException: " + ex.getMessage());
+            }
+        }
+		return true;
+	}
+
 }

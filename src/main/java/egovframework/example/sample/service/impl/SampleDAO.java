@@ -20,7 +20,8 @@ import java.util.Map;
 
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
-
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyOrderVO;
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyProductVO;
 import egovframework.rte.psl.dataaccess.EgovAbstractDAO;
 
 import org.springframework.stereotype.Repository;
@@ -105,8 +106,12 @@ public class SampleDAO extends EgovAbstractDAO {
 		return (Integer) select("sampleDAO.selectSampleListTotCnt", searchVO);
 	}
 	
-	public String insertOrderId(Map<String,String> param){
-		return (String) insert("sampleDAO.insertOrderId",param);
+	public String insertOrderId(EximbayReadyOrderVO orderInfo){
+		return (String) insert("sampleDAO.insertOrderId",orderInfo);
+	}
+	
+	public String insertProduct(List<EximbayReadyProductVO> productInfo){
+		return (String) insert("sampleDAO.insertProduct",productInfo);
 	}
 
 }

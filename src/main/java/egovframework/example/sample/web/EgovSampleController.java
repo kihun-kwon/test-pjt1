@@ -22,7 +22,7 @@ import egovframework.example.cmmn.EximbayService;
 import egovframework.example.sample.service.EgovSampleService;
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
-
+import egovframework.example.sample.service.eximbay.ready.EximbayReadyOrderVO;
 import egovframework.rte.fdl.property.EgovPropertyService;
 import egovframework.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 
@@ -35,6 +35,8 @@ import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -214,15 +216,21 @@ public class EgovSampleController {
 		return "forward:/egovSampleList.do";
 	}
 	
-	@RequestMapping(value="/getFgKey.do", method=RequestMethod.POST)
+	@RequestMapping(value="/getFgKey.do", method=RequestMethod.POST, produces = "application/json; charset=utf8")
 	@ResponseBody
-	public String getFgKey(@RequestParam Map<String,String> param){
-		return sampleService.getFgKey(param);
+	public String getFgKey(@ModelAttribute EximbayReadyOrderVO vo,HttpServletRequest req,HttpServletResponse res) throws Exception{
+		return sampleService.getFgKey(vo,req,res);
 	}
 	
 	@RequestMapping(value="/callEximbayStatus.do",method=RequestMethod.GET)
 	@ResponseBody
-	public String callEximbayStatus(@RequestParam Map<String,String> param, HttpServletRequest req, HttpServletResponse res){
+	public String callEximbayStatus(@RequestParam Map<String,String> param, HttpServletRequest req, HttpServletResponse res) throws Exception{
 		return sampleService.callEximbayStatus(param, req, res); 
+	}
+	
+	@RequestMapping(value="/eximbay/payment/{transactionId}/cancel.do",method=RequestMethod.GET)
+	@ResponseBody
+	public String eximbayPaymentCancel(@PathVariable String transactionId, HttpServletRequest req, HttpServletResponse res) throws Exception{
+		return sampleService.eximbayPaymentCancel(transactionId, req, res); 
 	}
 }

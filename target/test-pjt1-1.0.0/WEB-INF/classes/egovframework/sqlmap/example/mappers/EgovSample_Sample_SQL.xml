@@ -9,6 +9,55 @@
 		<result property="useYn" column="use_yn"/>
 		<result property="regUser" column="reg_user"/>
 	</resultMap>
+	
+	<insert id="insertOrderId" parameterType="map">
+		INSERT INTO ORDER_T
+		(
+			ORDER_ID,
+			FGKEY,
+			TRANSACTION_TYPE,
+			CURRENCY,
+			AMOUNT,
+			LANG,
+			PAYMENT_METHOD,
+			MULTI_PAYMENT_METHOD,
+			MID,
+			RETURN_URL,
+			STATUS_URL,
+			NAME,
+			PHONE_NUMBER,
+			EMAIL,
+			RECEIPT_STATUS,
+			AMOUNT_TAX_FREE,
+			AMOUNT_TAXABLE,
+			AMOUNT_VAT,
+			AMOUNT_SERVICE_FEE,
+			OTHER_PARAM,
+			OTHER_PARAM2
+		) VALUES (
+			#{order_id},
+			#{fgkey},
+			#{transaction_type},
+			#{currency},
+			#{amount},
+			#{lang},
+			#{payment_method},
+			#{multi_payment_method},
+			#{mid},
+			#{return_url},
+			#{status_url},
+			#{name},
+			#{phone_number},
+			#{email},
+			#{receipt_status},
+			#{amount_tax_free},
+			#{amount_taxable},
+			#{amount_vat},
+			#{amount_service_fee},
+			#{other_param},
+			#{other_param2}
+		)
+	</insert>
 
 	<insert id="insertSample" parameterType="SampleVO">
 

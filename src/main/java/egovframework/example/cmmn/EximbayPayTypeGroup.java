@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public enum EximbayPayment {
+public enum EximbayPayTypeGroup {
 	
 	LOCALPAY("국내결제수단",Arrays.asList(EximbayPayType.KAKAOPAY,EximbayPayType.NAVERPAY_POINT,EximbayPayType.NAVERPAY_CARD,EximbayPayType.NAVERPAY_CARDPOINT,EximbayPayType.VER_ACCOUNT,EximbayPayType.TOSS,EximbayPayType.SMAILPAY,EximbayPayType.PAYCO)),
 	GLOBALPAY("해외결제수단",Arrays.asList(EximbayPayType.VISA,EximbayPayType.MASTER,EximbayPayType.AMEX,EximbayPayType.JCB)),
@@ -13,13 +13,13 @@ public enum EximbayPayment {
 	private String title;
 	private List<EximbayPayType> list;
 	
-	EximbayPayment(String title, List<EximbayPayType> list){
+	EximbayPayTypeGroup(String title, List<EximbayPayType> list){
 		this.title = title;
 		this.list = list;
 	}
 	
-	public static EximbayPayment findByPayment(EximbayPayType payType){
-		return Arrays.stream(EximbayPayment.values())
+	public static EximbayPayTypeGroup findByPayment(EximbayPayType payType){
+		return Arrays.stream(EximbayPayTypeGroup.values())
 				.filter(payment -> payment.hasPaymentCode(payType))
 				.findAny().orElse(EMPTY);
 	}
