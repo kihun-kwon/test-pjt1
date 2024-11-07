@@ -9,6 +9,7 @@ public class EximbayCommReturnVO {
 	private String code;
 	private String message;
 	private String description;
+	
 	public String getRescode() {
 		return rescode;
 	}

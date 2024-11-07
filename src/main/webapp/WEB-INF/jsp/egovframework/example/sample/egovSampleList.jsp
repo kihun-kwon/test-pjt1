@@ -173,8 +173,8 @@
 	<form id="form1">
 		<input type="hidden" name="eximbayPaymentVO.payment_method" value="P101"/>
 		<!-- input type="hidden" name="multi_payment_method" value="P302-P303"/-->
-		<input type="hidden" name="productList[0].product_id" value="1" />
-		<input type="hidden" name="productList[1].product_id" value="2" />
+		<input type="hidden" name="product[0].product_id" value="1" />
+		<input type="hidden" name="product[1].product_id" value="2" />
 	</form>
     <form:form commandName="searchVO" id="listForm" name="listForm" method="post">
         <input type="hidden" name="selectedId" />

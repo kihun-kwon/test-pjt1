@@ -1,5 +1,7 @@
 package egovframework.example.sample.service.eximbay.cancel;
 
+import org.springframework.web.bind.annotation.ModelAttribute;
+
 import egovframework.example.cmmn.EximbayService;
 
 public class EximbayCancelOrderVO {
@@ -68,8 +70,14 @@ public class EximbayCancelOrderVO {
 		this.tax = tax;
 	}
 
+	@Override
 	public String toString(){
-		String str = EximbayService.appendClassVariable(this);
+		String str = "";
+		try {
+			str = EximbayService.appendClassVariable(this);
+		} catch (Exception e) {
+			throw new RuntimeException();
+		}
 		str = "{\n" + str + "}";
 		return str;
 	}

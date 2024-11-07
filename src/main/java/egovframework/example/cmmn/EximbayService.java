@@ -9,14 +9,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +38,7 @@ public class EximbayService {
 	private final static String testEximbayMid = "1849705C64";
 	private final static String liveEximbayMid = "";
 	
-	private static EximbayCommReturnVO sendToEximbay(EximbayPayStatus payStatus,String sendUrl, String sendData){
+	private static EximbayCommReturnVO sendToEximbay(EximbayPayStatus payStatus,String sendUrl, String sendData) throws Exception{
 		BufferedReader in = null;
 		try {
 			URL url = new URL(sendUrl);
@@ -90,7 +89,7 @@ public class EximbayService {
 		return null;
 	}
 	
-	public static EximbayCommReturnVO ready(EximbayReadyOrderVO vo){
+	public static EximbayCommReturnVO ready(EximbayReadyOrderVO vo) throws Exception{
 		
 		String callUrl = testEximbayPaymentUrl + EximbayPayStatus.READY.getSubUrl();
 		String sendData = vo.toString();
@@ -248,7 +247,7 @@ public class EximbayService {
 	 * @param req
 	 * @return
 	 */
-	public static EximbayCommReturnVO verify(HttpServletRequest req){
+	public static EximbayCommReturnVO verify(HttpServletRequest req) throws Exception{
 		String callUrl = testEximbayPaymentUrl + EximbayPayStatus.VERIFY.getSubUrl();
 		String sendData = "{\"data\":\""+req.getQueryString()+"\"}";
 		//결제 데이터 인증
@@ -261,7 +260,7 @@ public class EximbayService {
 	 * @param cancelOrder
 	 * @return
 	 */
-	public static EximbayCommReturnVO cancel(String transactionId, EximbayCancelOrderVO cancelOrder){
+	public static EximbayCommReturnVO cancel(String transactionId, EximbayCancelOrderVO cancelOrder) throws Exception{
 		String callUrl = testEximbayPaymentUrl + String.format(EximbayPayStatus.CANCEL.getSubUrl(),transactionId);
 		//상점 아이디 
 		cancelOrder.setMid(testEximbayMid);
@@ -275,7 +274,7 @@ public class EximbayService {
 	 * @param obj
 	 * @return
 	 */
-	public static String appendClassVariable(Object obj){
+	public static String appendClassVariable(Object obj) throws Exception{
 		
 		String str = "";
 		Field[] fields = obj.getClass().getDeclaredFields();
@@ -289,7 +288,7 @@ public class EximbayService {
                 if(fieldValue instanceof EximbayCommVO){
 					str = declaredMethodInvoke(str,fieldValue);
                 } else if (fieldValue instanceof ArrayList){
-                	str += appendSeparator(str) + arrayListToString(fieldValue);
+                	str += arrayListToString(str,(ArrayList<?>)fieldValue);
                 } else {
                 	str = appendParam(str,fieldName, String.valueOf(fieldValue));
                 }
@@ -308,20 +307,25 @@ public class EximbayService {
 	 * @return
 	 * @throws Exception
 	 */
-	private static String arrayListToString(Object listObj) throws Exception{
-		String str = "";
-		List<?> list = (List<?>)listObj;
-		EximbayPayParam eximbayPayParam = checkClass(list);
+	private static String arrayListToString(String str, List<?> list) throws Exception{
+		EximbayPayParam eximbayPayParam = checkClassPayParam(list);
+		if (eximbayPayParam == EximbayPayParam.EMPTY) return "";
+		String appendStr = "";
 		for (Object obj : list) {
-			str = declaredMethodInvoke(str,obj);
+			appendStr = declaredMethodInvoke(appendStr,obj);
 		}
-		return "\""+eximbayPayParam.getKeyNm()+"\":[\n" + str + "]\n";
+		return appendSeparator(str) + "\""+eximbayPayParam.getKeyNm()+"\":[\n" + appendStr + "]\n";
 	}
-	
-	private static EximbayPayParam checkClass(List<?> list){
-		return EximbayPayParam.findByPayType(list.stream()
-					.filter(item -> EximbayPayParam.findByPayType(item.getClass().getSimpleName()) != EximbayPayParam.EMPTY)
-					.findFirst().orElseThrow(() -> new RuntimeException()).getClass().getSimpleName());
+	/**
+	 * list내에 pay vo가 있는지 확인
+	 * @param list
+	 * @return
+	 */
+	private static EximbayPayParam checkClassPayParam(List<?> list) throws Exception{
+		Optional<?> op = list.stream()
+				.filter(item -> EximbayPayParam.findByPayParam(item.getClass().getSimpleName()) != EximbayPayParam.EMPTY)
+				.findFirst();
+		return EximbayPayParam.findByPayParam(op.orElseThrow(() -> new RuntimeException()).getClass().getSimpleName());
 	}
 	
 	/**
@@ -330,7 +334,7 @@ public class EximbayService {
 	 * @param obj
 	 * @return VO 클래스에 해당하는 전송 전문 
 	 */
-	private static String declaredMethodInvoke(String str, Object obj){
+	private static String declaredMethodInvoke(String str, Object obj) throws Exception{
 		try {
 			Method myMethod = obj.getClass().getDeclaredMethod("toString",new Class[]{});
 			String retVal = String.valueOf(myMethod.invoke(obj));
@@ -341,11 +345,11 @@ public class EximbayService {
 		return str;
 	}
 	
-	public static String appendSeparator(String str){
+	public static String appendSeparator(String str) throws Exception{
 		return !"".equals(str)?",":"";
 	}
 	
-	public static String appendParam(String str, String key, String val){
+	public static String appendParam(String str, String key, String val) throws Exception{
 		
 		if (!"".equals(val)) str += appendSeparator(str) + "\""+ key +"\":\"" + val + "\"\n";
 		
@@ -357,8 +361,11 @@ public class EximbayService {
 	 * @param fieldName
 	 * @return
 	 */
-	public static boolean appendExcVariable(String fieldName){
-		return " product_id ".indexOf(fieldName) > -1 ? true:false;
+	public static boolean appendExcVariable(String fieldName) throws Exception{
+		List<String> exVal =  Arrays.asList("product_id");
+		return exVal.stream().anyMatch(val -> val.equals(fieldName));
+		
+		//return " product_id ".indexOf(fieldName) > -1 ? true:false;
 	}
 	
 	/**
@@ -366,7 +373,7 @@ public class EximbayService {
 	 * @param obj
 	 * @return
 	 */
-	public static boolean isClassVariableEmpty(Object obj){
+	public static boolean isClassVariableEmpty(Object obj) throws Exception{
 		
 		Field[] fields = obj.getClass().getDeclaredFields();
         AccessibleObject.setAccessible(fields, true);

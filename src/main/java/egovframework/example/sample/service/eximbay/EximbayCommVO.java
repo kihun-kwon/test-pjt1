@@ -8,8 +8,13 @@ public class EximbayCommVO {
 	public String toString(Object obj){
 		if (isEmpty(obj)) return "";
 		
-		EximbayPayParam eximbayPayParam = EximbayPayParam.findByPayType(obj.getClass().getSimpleName());
-		String str = EximbayService.appendClassVariable(obj);
+		EximbayPayParam eximbayPayParam = EximbayPayParam.findByPayParam(obj.getClass().getSimpleName());
+		String str = "";
+		try {
+			str = EximbayService.appendClassVariable(obj);
+		} catch (Exception e) {
+			throw new RuntimeException();
+		}
 		
 		if (eximbayPayParam == EximbayPayParam.READY_PRODUCT){
 			return "{" + str + "}\n";
@@ -19,6 +24,10 @@ public class EximbayCommVO {
 	}
 	
 	public boolean isEmpty(Object obj){
-		return EximbayService.isClassVariableEmpty(obj);
+		try {
+			return EximbayService.isClassVariableEmpty(obj);
+		} catch (Exception e) {
+			throw new RuntimeException();
+		}
 	}
 }

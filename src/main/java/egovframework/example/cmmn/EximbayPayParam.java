@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public enum EximbayPayParam {
 	
-	// 결제 검증
+	// 결제 준비
 	READY_PRODUCT("EximbayReadyProductVO","product"),
 	READY_BUYER("EximbayReadyBuyerVO","buyer"),
 	READY_MERCHANT("EximbayReadyMerchantVO","merchant"),
@@ -21,7 +21,7 @@ public enum EximbayPayParam {
 	CANCEL_REFUND("EximbayCancelRefundVO","refund"),
 	CANCEL_TAX("EximbayCancelTaxVO","tax"),
 	
-	EMPTY(null,"");
+	EMPTY("","");
 	
 	private String classNm;
 	private String keyNm;
@@ -31,7 +31,7 @@ public enum EximbayPayParam {
 		this.keyNm = keyNm;
 	}
 	
-	public static EximbayPayParam findByPayType(String classNm){
+	public static EximbayPayParam findByPayParam(String classNm){
 		return Arrays.stream(EximbayPayParam.values())
 				.filter(val ->  val.classNm.equals(classNm))
 				.findAny().orElse(EMPTY);

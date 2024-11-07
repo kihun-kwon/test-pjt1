@@ -164,20 +164,20 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			if (eximbayReadyOrderVO == null)
 				throw new RuntimeException();
 			//상품정보 확인
-			if (eximbayReadyOrderVO.getProductList() == null || eximbayReadyOrderVO.getProductList().size() == 0)
+			if (eximbayReadyOrderVO.getProduct() == null || eximbayReadyOrderVO.getProduct().size() == 0)
 				throw new RuntimeException();
 			
 			//payment Method가 지정된 경우
 			EximbayPayType eximbayPayType = null;
 			EximbayPayTypeGroup eximbayPayment;
-			if (eximbayReadyOrderVO.getEximbayPaymentVO() != null) {
+			if (eximbayReadyOrderVO.getPayment() != null) {
 				// 결제 모듈 단일 수단 선택인 경우
-				if (!"".equals(eximbayReadyOrderVO.getEximbayPaymentVO().getPayment_method())) {
-					eximbayPayType = EximbayPayType.findByPayType(eximbayReadyOrderVO.getEximbayPaymentVO().getPayment_method());
+				if (!"".equals(eximbayReadyOrderVO.getPayment().getPayment_method())) {
+					eximbayPayType = EximbayPayType.findByPayType(eximbayReadyOrderVO.getPayment().getPayment_method());
 				} 
 				// 결제 모듈 복수 수단 선택일 경우
-				else if (!"".equals(eximbayReadyOrderVO.getEximbayPaymentVO().getMulti_payment_method())){
-					String multiMethod = eximbayReadyOrderVO.getEximbayPaymentVO().getMulti_payment_method();
+				else if (!"".equals(eximbayReadyOrderVO.getPayment().getMulti_payment_method())){
+					String multiMethod = eximbayReadyOrderVO.getPayment().getMulti_payment_method();
 					String[] arrMultiMethod = multiMethod.split("-");
 					eximbayPayType = EximbayPayType.findByPayType(arrMultiMethod[0]);
 				}
@@ -199,12 +199,12 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 						sb.append("-"+payType.getTitle());
 				}
 				// multi payment method 셋팅
-				if (eximbayReadyOrderVO.getEximbayPaymentVO() == null) {
+				if (eximbayReadyOrderVO.getPayment() == null) {
 					EximbayReadyPaymentVO eximbayReadyPaymentVO = new EximbayReadyPaymentVO();
 					eximbayReadyPaymentVO.setMulti_payment_method(sb.toString());
-					eximbayReadyOrderVO.setEximbayPaymentVO(eximbayReadyPaymentVO);
+					eximbayReadyOrderVO.setPayment(eximbayReadyPaymentVO);
 				} else {
-					eximbayReadyOrderVO.getEximbayPaymentVO().setMulti_payment_method(sb.toString());
+					eximbayReadyOrderVO.getPayment().setMulti_payment_method(sb.toString());
 				}
 			}
 			
@@ -221,10 +221,10 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			 **/
 			// 공통
 			//TODO 가맹점 아이디 확인 후 셋팅
-			eximbayReadyOrderVO.getEximbayMerchantVO().setMid("1849705C64");
+			eximbayReadyOrderVO.getMerchant().setMid("1849705C64");
 			//TODO 구매자 개인정보 셋팅
-			eximbayReadyOrderVO.getEximbayBuyerVO().setName("eximbay");
-			eximbayReadyOrderVO.getEximbayBuyerVO().setEmail("test@eximbay.com");
+			eximbayReadyOrderVO.getBuyer().setName("eximbay");
+			eximbayReadyOrderVO.getBuyer().setEmail("test@eximbay.com");
 			//TODO 활용여부 체크 필요
 			//surcharge, ship_to, bill_to
 			System.out.println("eximbayPayment ::: "+eximbayPayment);
@@ -232,18 +232,18 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			if (eximbayPayment == EximbayPayTypeGroup.GLOBALPAY) {
 				orderId = "G0000000";
 				//TODO 주문번호 채번 로직 확인
-				eximbayReadyOrderVO.getEximbayPaymentVO().setOrder_id(orderId);
+				eximbayReadyOrderVO.getPayment().setOrder_id(orderId);
 				//TODO 결제 처리 방식 지정 AUTHORIZE: 인증, 승인
-				eximbayReadyOrderVO.getEximbayPaymentVO().setTransaction_type("AUTHORIZE");
+				eximbayReadyOrderVO.getPayment().setTransaction_type("AUTHORIZE");
 				
-				eximbayReadyOrderVO.getEximbayPaymentVO().setCurrency("USD");
+				eximbayReadyOrderVO.getPayment().setCurrency("USD");
 				//TODO 상품정보 조회 후 금액 계산
-				eximbayReadyOrderVO.getEximbayPaymentVO().setAmount("10000");
-				eximbayReadyOrderVO.getEximbayPaymentVO().setLang("EN");
+				eximbayReadyOrderVO.getPayment().setAmount("10000");
+				eximbayReadyOrderVO.getPayment().setLang("EN");
 				//TODO 결제 완료 페이지
-				eximbayReadyOrderVO.getEximbayUrlVO().setReturn_url("eximbay.com");
+				eximbayReadyOrderVO.getUrl().setReturn_url("eximbay.com");
 				//TODO 결제 검증 수신 페이지
-				eximbayReadyOrderVO.getEximbayUrlVO().setStatus_url("eximbay.com");
+				eximbayReadyOrderVO.getUrl().setStatus_url("eximbay.com");
 				
 				//TODO 예비 파라미터 정보 셋팅 
 				//param.getEximbayOtherParamVO().setParam1("");
@@ -253,38 +253,38 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			else if (eximbayPayment == EximbayPayTypeGroup.LOCALPAY) {
 				orderId = "E0000000";
 				//TODO 주문번호 채번 로직 확인
-				eximbayReadyOrderVO.getEximbayPaymentVO().setOrder_id(orderId);
+				eximbayReadyOrderVO.getPayment().setOrder_id(orderId);
 				
 				//결제 처리 방식 지정 PAYMENT: 인증, 승인, 매입  
-				eximbayReadyOrderVO.getEximbayPaymentVO().setTransaction_type("PAYMENT");
+				eximbayReadyOrderVO.getPayment().setTransaction_type("PAYMENT");
 				
-				eximbayReadyOrderVO.getEximbayPaymentVO().setCurrency("USD");
+				eximbayReadyOrderVO.getPayment().setCurrency("USD");
 				//TODO 상품정보 조회 후 금액 계산
-				eximbayReadyOrderVO.getEximbayPaymentVO().setAmount("10000");
-				eximbayReadyOrderVO.getEximbayPaymentVO().setLang("KR");
+				eximbayReadyOrderVO.getPayment().setAmount("10000");
+				eximbayReadyOrderVO.getPayment().setLang("KR");
 				//TODO 결제 완료 페이지
-				eximbayReadyOrderVO.getEximbayUrlVO().setReturn_url("eximbay.com");
+				eximbayReadyOrderVO.getUrl().setReturn_url("http://localhost:8080/test-pjt1/");
 				//TODO 결제 검증 수신 페이지
-				eximbayReadyOrderVO.getEximbayUrlVO().setStatus_url("eximbay.com");
+				eximbayReadyOrderVO.getUrl().setStatus_url("eximbay.com");
 				
 				//TODO 국내 결제 시 세금 정보 셋팅 ( 네이버페이 포인트 결제 시 모두 필수 )
 				//현금 영수증 발급
-				eximbayReadyOrderVO.getEximbayTaxVO().setReceipt_status("N");
+				eximbayReadyOrderVO.getTax().setReceipt_status("N");
 				// 결제 금액 중 면세 금액
-				eximbayReadyOrderVO.getEximbayTaxVO().setAmount_tax_free("1");
+				eximbayReadyOrderVO.getTax().setAmount_tax_free("1");
 				// 결제 금액 중 과세 금액
-				eximbayReadyOrderVO.getEximbayTaxVO().setAmount_taxable("1");
+				eximbayReadyOrderVO.getTax().setAmount_taxable("1");
 				// 결제 금액 중 부과세 금액
-				eximbayReadyOrderVO.getEximbayTaxVO().setAmount_vat("1");
+				eximbayReadyOrderVO.getTax().setAmount_vat("1");
 				// 결제 금액 중 봉사료
-				eximbayReadyOrderVO.getEximbayTaxVO().setAmount_service_fee("0");
+				eximbayReadyOrderVO.getTax().setAmount_service_fee("0");
 				
 				//TODO 예비 파라미터 정보 셋팅 
 				//param.getEximbayOtherParamVO().setParam1("");
 				//param.getEximbayOtherParamVO().setParam2("");
 				
 				//국내 결제인 경우만 
-				eximbayReadyOrderVO.getEximbaySettingsVO().setIssuer_country("KR");
+				eximbayReadyOrderVO.getSettings().setIssuer_country("KR");
 				//가상계좌 결제 입금만료기한 셋팅 시 
 				//param.getEximbaySettingsVO().setVirtualaccount_expiry_date("");
 			} else {
@@ -292,21 +292,23 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 			}
 			
 			//TODO 상품정보 DB 조회
-			eximbayReadyOrderVO.getProductList().clear();
+			eximbayReadyOrderVO.getProduct().clear();
 			EximbayReadyProductVO eximbayProductVO = new EximbayReadyProductVO();
 			eximbayProductVO.setProduct_id("1");
 			eximbayProductVO.setName("주문1");
 			eximbayProductVO.setQuantity("1");
 			eximbayProductVO.setUnit_price("1000");
 			eximbayProductVO.setLink("eximbay.com");
-			eximbayReadyOrderVO.getProductList().add(eximbayProductVO);
+			eximbayReadyOrderVO.getProduct().add(eximbayProductVO);
 			eximbayProductVO = new EximbayReadyProductVO();
 			eximbayProductVO.setProduct_id("2");
 			eximbayProductVO.setName("주문2");
 			eximbayProductVO.setQuantity("2");
 			eximbayProductVO.setUnit_price("5000");
 			eximbayProductVO.setLink("eximbay.com");
-			eximbayReadyOrderVO.getProductList().add(eximbayProductVO);
+			eximbayReadyOrderVO.getProduct().add(eximbayProductVO);
+			
+			System.out.println("eximbayReadyOrderVO.getProduct() ::: "+eximbayReadyOrderVO.getProduct());
 			
 			System.out.println("Eximbay Ready :: "+eximbayReadyOrderVO.toString());
 			EximbayReadyReturnVO eximbayReadyReturnVO =  (EximbayReadyReturnVO) EximbayService.ready(eximbayReadyOrderVO);
@@ -327,6 +329,7 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 				throw new RuntimeException();
 			}
 		} catch (Exception e){
+			//e.printStackTrace();
 			throw new RuntimeException();
 		}
 	}
@@ -379,7 +382,7 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	}
 	
 	@Override
-	public String callEximbayStatus(Map<String,String> param, HttpServletRequest req, HttpServletResponse res){
+	public String callEximbayStatus(Map<String,String> param, HttpServletRequest req, HttpServletResponse res)  throws Exception{
 		//String retVal = "rescode=null&resmsg=null";
 		//Eximbay 데이터 검증 호출
 		EximbayReadyReturnVO returnVO = (EximbayReadyReturnVO) EximbayService.verify(req);

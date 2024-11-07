@@ -28,7 +28,7 @@ public class EximbayReadyUrlVO extends EximbayCommVO {
 		this.status_url = status_url;
 	}
 	@Override
-	public String toString(){
+	public String toString() {
 		return super.toString(this);
 	}
 }
